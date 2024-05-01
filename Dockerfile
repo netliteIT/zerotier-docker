@@ -1,5 +1,5 @@
 ARG ALPINE_IMAGE=alpine
-ARG ALPINE_VERSION=edge
+ARG ALPINE_VERSION=3.19
 ARG ZT_COMMIT=327eb9013b39809835a912c9117a0b9669f4661f
 ARG ZT_VERSION=1.12.2
 
@@ -10,24 +10,19 @@ ARG ZT_COMMIT
 COPY patches /patches
 COPY scripts /scripts
 
-RUN apk add --update alpine-sdk linux-headers openssl-dev \
+RUN apk add --update alpine-sdk linux-headers openssl-dev cargo \
   && git clone --quiet https://github.com/zerotier/ZeroTierOne.git /src \
   && git -C src reset --quiet --hard ${ZT_COMMIT} \
-  && cd /src \
-  && git apply /patches/* \
-  && make -f make-linux.mk
+  && cd /src; \
+  make -f make-linux.mk
+#  git apply /patches/*; \
 
 FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
 
 ARG ZT_VERSION
 
-LABEL org.opencontainers.image.title="zerotier" \
-      org.opencontainers.image.version="${ZT_VERSION}" \
-      org.opencontainers.image.description="ZeroTier One as Docker Image" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/zyclonite/zerotier-docker"
-
 COPY --from=builder /src/zerotier-one /scripts/entrypoint.sh /usr/sbin/
+RUN chmod +x /usr/sbin/entrypoint.sh
 
 RUN apk add --no-cache --purge --clean-protected libc6-compat libstdc++ \
   && mkdir -p /var/lib/zerotier-one \
