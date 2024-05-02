@@ -11,10 +11,18 @@ COPY patches /patches
 COPY scripts /scripts
 
 RUN apk add --update alpine-sdk linux-headers openssl-dev cargo \
-  && git clone --quiet https://github.com/zerotier/ZeroTierOne.git /src \
-  && git -C src reset --quiet --hard ${ZT_COMMIT} \
-  && cd /src; \
-  make -f make-linux.mk
+  && mkdir /src && cd /src \
+  && wget https://github.com/zerotier/ZeroTierOne/archive/refs/tags/${ZT_VERSION}.tar.gz \
+  && tar vxfzpP ${ZT_VERSION}.tar.gz \
+  && cd ZeroTierOne-${ZT_VERSION} \
+  && make -f make-linux.mk
+#  git apply /patches/*; \
+
+#RUN apk add --update alpine-sdk linux-headers openssl-dev cargo \
+#  && git clone --quiet https://github.com/zerotier/ZeroTierOne.git /src \
+#  && git -C src reset --quiet --hard ${ZT_COMMIT} \
+#  && cd /src; \
+#  make -f make-linux.mk
 #  git apply /patches/*; \
 
 FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
