@@ -1,7 +1,7 @@
 ARG ALPINE_IMAGE=alpine
-ARG ALPINE_VERSION=3.19
-ARG ZT_COMMIT=327eb9013b39809835a912c9117a0b9669f4661f
-ARG ZT_VERSION=1.12.2
+ARG ALPINE_VERSION=edge
+#ARG ZT_COMMIT=327eb9013b39809835a912c9117a0b9669f4661f
+ARG ZT_VERSION=1.14.0
 
 FROM ${ALPINE_IMAGE}:${ALPINE_VERSION} as builder
 
@@ -11,11 +11,19 @@ COPY patches /patches
 COPY scripts /scripts
 
 RUN apk add --update alpine-sdk linux-headers openssl-dev cargo \
-  && git clone --quiet https://github.com/zerotier/ZeroTierOne.git /src \
-  && git -C src reset --quiet --hard ${ZT_COMMIT} \
-  && cd /src; \
+  && mkdir /src && cd /src \
+  && wget https://github.com/zerotier/ZeroTierOne/archive/refs/tags/${ZT_VERSION}.tar.gz \
+  && tar vxfzpP ${ZT_VERSION}.tar.gz \
+  && cd ZeroTierOne-${ZT_VERSION}; \
   git apply /patches/*; \
   make -f make-linux.mk
+
+#RUN apk add --update alpine-sdk linux-headers openssl-dev cargo \
+#  && git clone --quiet https://github.com/zerotier/ZeroTierOne.git /src \
+#  && git -C src reset --quiet --hard ${ZT_COMMIT} \
+#  && cd /src; \
+#  make -f make-linux.mk
+#  git apply /patches/*; \
 
 FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
 
@@ -30,7 +38,7 @@ RUN apk add --no-cache --purge --clean-protected libc6-compat libstdc++ \
   && ln -s /usr/sbin/zerotier-one /usr/sbin/zerotier-cli \
   && rm -rf /var/cache/apk/*
 
-EXPOSE 9993/udp
+#EXPOSE 9993/udp
 
 ENTRYPOINT ["entrypoint.sh"]
 
